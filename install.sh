@@ -178,9 +178,10 @@ Type=simple
 User=$(whoami)
 WorkingDirectory=${SCRIPT_DIR}
 Environment=DISPLAY=:0
-ExecStart=${SCRIPT_DIR}/venv/bin/gunicorn --workers 2 --bind 127.0.0.1:5000 app:app
+ExecStart=${SCRIPT_DIR}/venv/bin/gunicorn --workers 1 --bind 127.0.0.1:5000 app:app
 Restart=always
 RestartSec=5
+TimeoutStopSec=5
 
 [Install]
 WantedBy=multi-user.target

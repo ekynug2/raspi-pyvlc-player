@@ -8,6 +8,8 @@ import os
 import json
 import time
 import threading
+import signal
+import sys
 from pathlib import Path
 from functools import wraps
 
@@ -269,6 +271,17 @@ class SignagePlayer:
             filepath.unlink()
         return {"deleted": filename}
 
+    def release(self):
+        """Cleanly release VLC resources."""
+        try:
+            self.list_player.stop()
+            self.list_player.release()
+            self.player.release()
+            self.instance.release()
+            print("VLC resources released.")
+        except Exception as e:
+            print(f"Error releasing VLC: {e}")
+
 
 # ---------------------------------------------------------------------------
 # Initialise player
@@ -476,9 +489,23 @@ def api_videos():
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
+    # Signal handling for standalone mode
+    def signal_handler(sig, frame):
+        print("\nShutting down...")
+        player.release()
+        sys.exit(0)
+
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
+
     print("=" * 60)
     print("  Raspberry Pi Video Signage Player")
     print("  Open http://<raspi-ip>:5000 in your browser")
     print("=" * 60)
     # Use 0.0.0.0 so it's accessible from other devices on the network
     app.run(host="0.0.0.0", port=5000, debug=False, threaded=True)
+else:
+    # Logic for Gunicorn/WSGI
+    # We use this to ensure cleanup when gunicorn kills workers
+    import atexit
+    atexit.register(player.release)
