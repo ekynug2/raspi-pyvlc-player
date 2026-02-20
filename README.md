@@ -17,7 +17,7 @@ Web-based video player signage control panel menggunakan Python VLC dan Flask.
 - **Player:** VLC (python-vlc)
 - **Backend:** Flask (Python)
 - **Frontend:** HTML/CSS/JavaScript (Dark theme)
-- **Akses:** http://<IP_RASPBERRY_PI>:5000
+- **Akses:** http://<IP_RASPBERRY_PI>:80
 
 ## Installasi
 
@@ -25,11 +25,10 @@ Web-based video player signage control panel menggunakan Python VLC dan Flask.
 
 ```bash
 # Copy project ke Raspberry Pi
-scp -r raspi-pyvlc-player/ pi@192.168.192.13:~/
+scp -r raspi-pyvlc-player/ pi@<IP_RASPBERRY_PI>:~/
 
 # Login ke Raspberry Pi
-ssh pi@192.168.192.13
-# password: rasp7890
+ssh pi@<IP_RASPBERRY_PI>
 
 # Jalankan installer
 cd ~/raspi-pyvlc-player
@@ -60,7 +59,7 @@ python app.py
 ### Buka Web Control Panel
 
 ```
-http://192.168.192.13:5000
+http://<IP_RASPBERRY_PI>:80
 ```
 
 ### Upload Video
@@ -140,8 +139,8 @@ journalctl -u signage-player -n 50
 # Cek service berjalan
 sudo systemctl status signage-player
 
-# Cek port 5000
-sudo netstat -tlnp | grep 5000
+# Cek port 80
+sudo netstat -tlnp | grep 80
 ```
 
 ### Suara tidak keluar
@@ -161,7 +160,3 @@ sudo systemctl disable signage-player
 sudo rm /etc/systemd/system/signage-player.service
 sudo systemctl daemon-reload
 ```
-
----
-
-Author: Created with opencode
