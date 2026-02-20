@@ -46,8 +46,7 @@ class SignagePlayer:
         self.playlist_file = playlist_file
         self.video_dir.mkdir(parents=True, exist_ok=True)
 
-        # VLC instance optimized for Raspberry Pi Signage
-        # --vout=mmal_vout is hardware accelerated and usually fills the screen better on RPi
+        # VLC instance - Reverted to a safer configuration to avoid flickering
         self.instance = vlc.Instance(
             "--fullscreen",
             "--no-video-title-show",
@@ -55,13 +54,12 @@ class SignagePlayer:
             "--aout=alsa",
             "--mouse-hide-timeout=0",
             "--video-on-top",
-            "--no-video-deco",
-            "--vout=mmal_vout"  # Critical for RPi hardware acceleration and scaling
+            "--no-embedded-video" # Helps with some window managers to force fullscreen
         )
         self.list_player = self.instance.media_list_player_new()
         self.player = self.list_player.get_media_player()
         
-        # We'll handle scaling dynamically in the play method
+        # Scaling to 0 (Original/Auto)
         self.player.video_set_scale(0)
 
         # Playlist state
@@ -143,18 +141,6 @@ class SignagePlayer:
                     return {"error": "Index out of range"}
             else:
                 self.list_player.play()
-            
-            # Force fullscreen and scaling after starting
-            def force_aspect():
-                time.sleep(0.7)  # Wait a bit longer for MMAL to initialize
-                self.player.set_fullscreen(True)
-                # Setting scale to 0 tells VLC to fit the screen
-                self.player.video_set_scale(0)
-                # Try to force the aspect ratio to fill the screen
-                # If 16:9 still shows bars, the monitor might be 16:10 or something else
-                self.player.video_set_aspect_ratio("16:9")
-            
-            threading.Thread(target=force_aspect, daemon=True).start()
             
             return {"status": "playing"}
 
