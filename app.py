@@ -46,20 +46,23 @@ class SignagePlayer:
         self.playlist_file = playlist_file
         self.video_dir.mkdir(parents=True, exist_ok=True)
 
-        # VLC instance  --  use dummy video output when no display is available
-        # Added --aspect-ratio and --canvas-aspect-ratio to force full screen stretch
-        self.instance = vlc.Instance("--fullscreen", "--no-video-title-show",
-                                     "--no-osd", "--aout=alsa",
-                                     "--mouse-hide-timeout=0")
+        # VLC instance optimized for Raspberry Pi Signage
+        # --vout=mmal_vout is hardware accelerated and usually fills the screen better on RPi
+        self.instance = vlc.Instance(
+            "--fullscreen",
+            "--no-video-title-show",
+            "--no-osd",
+            "--aout=alsa",
+            "--mouse-hide-timeout=0",
+            "--video-on-top",
+            "--no-video-deco",
+            "--vout=mmal_vout"  # Critical for RPi hardware acceleration and scaling
+        )
         self.list_player = self.instance.media_list_player_new()
         self.player = self.list_player.get_media_player()
         
-        # Set aspect ratio to match common screens or force stretch
-        # Note: On Raspberry Pi, sometimes 'scale' and 'aspect-ratio' are needed
-        self.player.video_set_scale(0) # 0 means fit to screen / original scale
-        # We can also force a specific aspect ratio if it's not filling correctly
-        # But usually 'fullscreen' + 'scale=0' or a fixed ratio like 16:9 helps
-        # Let's add manual aspect setting in status or during play if needed.
+        # We'll handle scaling dynamically in the play method
+        self.player.video_set_scale(0)
 
         # Playlist state
         self.playlist: list[str] = []   # ordered list of filenames
@@ -141,12 +144,14 @@ class SignagePlayer:
             else:
                 self.list_player.play()
             
-            # Force fullscreen and aspect ratio after starting
-            # We wait a tiny bit for the video to actually start loading
+            # Force fullscreen and scaling after starting
             def force_aspect():
-                time.sleep(0.5)
+                time.sleep(0.7)  # Wait a bit longer for MMAL to initialize
                 self.player.set_fullscreen(True)
-                # Try to force 16:9 as a common default if it's not filling
+                # Setting scale to 0 tells VLC to fit the screen
+                self.player.video_set_scale(0)
+                # Try to force the aspect ratio to fill the screen
+                # If 16:9 still shows bars, the monitor might be 16:10 or something else
                 self.player.video_set_aspect_ratio("16:9")
             
             threading.Thread(target=force_aspect, daemon=True).start()
