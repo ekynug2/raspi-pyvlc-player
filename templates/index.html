@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signage Player Control</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-left">
+            <div class="logo">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="5 3 19 12 5 21 5 3"/>
+                </svg>
+            </div>
+            <h1>Signage Player</h1>
+        </div>
+        <div class="header-right">
+            <a href="/logout" class="btn btn-sm" style="text-decoration:none;margin-right:0.5rem">Logout</a>
+            <span class="status-badge" id="statusBadge">Stopped</span>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Now Playing Card -->
+        <section class="card now-playing-card">
+            <div class="card-header">
+                <h2>Now Playing</h2>
+            </div>
+            <div class="now-playing-info">
+                <div class="current-track" id="currentTrack">No video loaded</div>
+                <div class="time-display">
+                    <span id="currentTime">00:00</span>
+                    <span class="time-separator">/</span>
+                    <span id="totalTime">00:00</span>
+                </div>
+            </div>
+            <!-- Seek Bar -->
+            <div class="seek-container">
+                <input type="range" id="seekBar" class="seek-bar" min="0" max="1000" value="0">
+            </div>
+            <!-- Transport Controls -->
+            <div class="transport-controls">
+                <button class="btn btn-control" onclick="apiCall('/api/previous', 'POST')" title="Previous">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/>
+                    </svg>
+                </button>
+                <button class="btn btn-control" onclick="apiCall('/api/stop', 'POST')" title="Stop">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                        <rect x="6" y="6" width="12" height="12"/>
+                    </svg>
+                </button>
+                <button class="btn btn-play" id="playPauseBtn" onclick="togglePlayPause()" title="Play / Pause">
+                    <svg id="playIcon" width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+                        <polygon points="5 3 19 12 5 21 5 3"/>
+                    </svg>
+                    <svg id="pauseIcon" width="28" height="28" viewBox="0 0 24 24" fill="currentColor" style="display:none">
+                        <rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>
+                    </svg>
+                </button>
+                <button class="btn btn-control" onclick="apiCall('/api/next', 'POST')" title="Next">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/>
+                    </svg>
+                </button>
+                <button class="btn btn-control" id="loopBtn" onclick="toggleLoop()" title="Loop">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/>
+                        <polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+                    </svg>
+                </button>
+            </div>
+            <!-- Volume -->
+            <div class="volume-container">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                </svg>
+                <input type="range" id="volumeBar" class="volume-bar" min="0" max="150" value="80"
+                       oninput="setVolume(this.value)">
+                <span id="volumeValue" class="volume-value">80%</span>
+            </div>
+        </section>
+
+        <!-- Playlist & Upload in two columns -->
+        <div class="two-columns">
+            <!-- Playlist -->
+            <section class="card playlist-card">
+                <div class="card-header">
+                    <h2>Playlist</h2>
+                    <span class="badge" id="playlistCount">0</span>
+                </div>
+                <div class="playlist-container" id="playlistContainer">
+                    <p class="empty-msg">No videos in playlist</p>
+                </div>
+            </section>
+
+            <!-- Upload & Files -->
+            <section class="card upload-card">
+                <div class="card-header">
+                    <h2>Upload Video</h2>
+                </div>
+                <div class="upload-zone" id="uploadZone">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="17 8 12 3 7 8"/>
+                        <line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                    <p>Drag & drop video files here</p>
+                    <p class="upload-hint">or click to browse</p>
+                    <input type="file" id="fileInput" accept="video/*" multiple hidden>
+                </div>
+                <div class="upload-progress" id="uploadProgress" style="display:none">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <span id="progressText">0%</span>
+                </div>
+
+                <!-- All files on disk -->
+                <div class="card-header" style="margin-top:1rem">
+                    <h2>Files on Disk</h2>
+                    <button class="btn btn-sm" onclick="refreshFiles()">Refresh</button>
+                </div>
+                <div class="files-list" id="filesList">
+                    <p class="empty-msg">No files</p>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>Raspberry Pi Video Signage Player</p>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
