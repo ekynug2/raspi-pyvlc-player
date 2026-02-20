@@ -109,6 +109,16 @@ for pkg in $REQUIRED_PACKAGES; do
                 MISSING_PACKAGES="$MISSING_PACKAGES openssl"
             fi
             ;;
+        nginx)
+            if ! command_exists nginx; then
+                MISSING_PACKAGES="$MISSING_PACKAGES nginx"
+            fi
+            ;;
+        *)
+            if ! package_installed "$pkg"; then
+                MISSING_PACKAGES="$MISSING_PACKAGES $pkg"
+            fi
+            ;;
     esac
 done
 
@@ -203,6 +213,7 @@ sudo systemctl enable ${SERVICE_NAME}
 if [ "$PRODUCTION_MODE" = true ]; then
     echo "[6/6] Configuring Nginx..."
     
+    sudo mkdir -p /etc/nginx/sites-available /etc/nginx/sites-enabled
     sudo bash -c "cat > /etc/nginx/sites-available/${SERVICE_NAME}" <<EOF
 server {
     listen 80;
