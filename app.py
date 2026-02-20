@@ -46,7 +46,7 @@ class SignagePlayer:
         self.playlist_file = playlist_file
         self.video_dir.mkdir(parents=True, exist_ok=True)
 
-        # VLC instance - Reverted to a safer configuration to avoid flickering
+        # VLC instance optimized for Raspberry Pi Trixie (Wayland)
         self.instance = vlc.Instance(
             "--fullscreen",
             "--no-video-title-show",
@@ -54,7 +54,10 @@ class SignagePlayer:
             "--aout=alsa",
             "--mouse-hide-timeout=0",
             "--video-on-top",
-            "--no-embedded-video" # Helps with some window managers to force fullscreen
+            "--no-video-deco",
+            "--aspect-ratio=16:9",
+            "--play-and-pause",
+            "--no-embedded-video" if os.environ.get("WAYLAND_DISPLAY") else "" 
         )
         self.list_player = self.instance.media_list_player_new()
         self.player = self.list_player.get_media_player()
@@ -141,6 +144,14 @@ class SignagePlayer:
                     return {"error": "Index out of range"}
             else:
                 self.list_player.play()
+            
+            # For Wayland/Trixie, we often need to re-trigger aspect ratio
+            def force_fullscreen():
+                time.sleep(0.5)
+                self.player.video_set_aspect_ratio("16:9")
+                self.player.set_fullscreen(True)
+            
+            threading.Thread(target=force_fullscreen, daemon=True).start()
             
             return {"status": "playing"}
 
