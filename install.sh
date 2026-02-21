@@ -78,7 +78,7 @@ package_installed() {
 }
 
 # 1. Check and install system dependencies
-echo "[1/5] Checking system dependencies..."
+echo "[1/6] Checking system dependencies..."
 
 MISSING_PACKAGES=""
 
@@ -132,7 +132,7 @@ else
 fi
 
 # 2. Create virtual environment
-echo "[2/5] Creating Python virtual environment..."
+echo "[2/6] Creating Python virtual environment..."
 if [ ! -d "$SCRIPT_DIR/venv" ]; then
     python3 -m venv "$SCRIPT_DIR/venv"
 fi

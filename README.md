@@ -5,10 +5,12 @@ Web-based video player signage control panel menggunakan Python VLC dan Flask.
 ## Fitur
 
 - **Web Control Panel** - Kontrol player dari browser (HP/tablet/laptop)
-- **Playlist Management** - Tambah, hapus, urut ulang video
-- **Auto-loop** - Playlist looping otomatis untuk signage
-- **Upload Video** - Upload langsung dari browser (max 2GB per file)
-- **Drag & Drop** - Seret file video untuk upload
+- **Playlist Management** - Tambah, hapus, dan drag & drop urut ulang video
+- **Video Scheduling** - Atur rentang tanggal dan jam tayang per video, serta fitur aktif/nonaktif
+- **Auto-loop & Auto-play** - Playlist otomatis berputar & auto-play saat boot
+- **System Monitoring** - Pantau CPU, Memory, Disk, dan Suhu secara real-time
+- **Security** - Login aman (Password Hash), CSRF protection, & brute-force rate limit
+- **Upload Video** - Upload langsung dari browser dan drag & drop (max 2GB)
 - **Fullscreen Playback** - Video diputar fullscreen di monitor Raspberry Pi
 
 ## Spesifikasi

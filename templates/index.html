@@ -1,20 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token }}">
     <title>Signage Player Control</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
+
 <body>
     <!-- Header -->
     <header class="header">
         <div class="header-left">
             <div class="logo">
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polygon points="5 3 19 12 5 21 5 3"/>
+                    <polygon points="5 3 19 12 5 21 5 3" />
                 </svg>
             </div>
             <h1>Signage Player</h1>
@@ -26,6 +29,41 @@
     </header>
 
     <main class="container">
+        <!-- System Info Bar -->
+        <section class="card system-info-card">
+            <div class="card-header">
+                <h2>System Info</h2>
+                <span class="system-uptime" id="sysUptime">--</span>
+            </div>
+            <div class="system-info-grid">
+                <div class="sys-item">
+                    <span class="sys-label">CPU</span>
+                    <div class="sys-bar">
+                        <div class="sys-bar-fill" id="cpuBar"></div>
+                    </div>
+                    <span class="sys-value" id="cpuValue">--%</span>
+                </div>
+                <div class="sys-item">
+                    <span class="sys-label">Memory</span>
+                    <div class="sys-bar">
+                        <div class="sys-bar-fill sys-bar-memory" id="memBar"></div>
+                    </div>
+                    <span class="sys-value" id="memValue">--%</span>
+                </div>
+                <div class="sys-item">
+                    <span class="sys-label">Disk</span>
+                    <div class="sys-bar">
+                        <div class="sys-bar-fill sys-bar-disk" id="diskBar"></div>
+                    </div>
+                    <span class="sys-value" id="diskValue">--%</span>
+                </div>
+                <div class="sys-item">
+                    <span class="sys-label">Temp</span>
+                    <span class="sys-value sys-temp" id="tempValue">--°C</span>
+                </div>
+            </div>
+        </section>
+
         <!-- Now Playing Card -->
         <section class="card now-playing-card">
             <div class="card-header">
@@ -47,42 +85,52 @@
             <div class="transport-controls">
                 <button class="btn btn-control" onclick="apiCall('/api/previous', 'POST')" title="Previous">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/>
+                        <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" />
                     </svg>
                 </button>
                 <button class="btn btn-control" onclick="apiCall('/api/stop', 'POST')" title="Stop">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-                        <rect x="6" y="6" width="12" height="12"/>
+                        <rect x="6" y="6" width="12" height="12" />
                     </svg>
                 </button>
                 <button class="btn btn-play" id="playPauseBtn" onclick="togglePlayPause()" title="Play / Pause">
                     <svg id="playIcon" width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
-                        <polygon points="5 3 19 12 5 21 5 3"/>
+                        <polygon points="5 3 19 12 5 21 5 3" />
                     </svg>
-                    <svg id="pauseIcon" width="28" height="28" viewBox="0 0 24 24" fill="currentColor" style="display:none">
-                        <rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>
+                    <svg id="pauseIcon" width="28" height="28" viewBox="0 0 24 24" fill="currentColor"
+                        style="display:none">
+                        <rect x="6" y="4" width="4" height="16" />
+                        <rect x="14" y="4" width="4" height="16" />
                     </svg>
                 </button>
                 <button class="btn btn-control" onclick="apiCall('/api/next', 'POST')" title="Next">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/>
+                        <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" />
                     </svg>
                 </button>
                 <button class="btn btn-control" id="loopBtn" onclick="toggleLoop()" title="Loop">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/>
-                        <polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+                        <polyline points="17 1 21 5 17 9" />
+                        <path d="M3 11V9a4 4 0 0 1 4-4h14" />
+                        <polyline points="7 23 3 19 7 15" />
+                        <path d="M21 13v2a4 4 0 0 1-4 4H3" />
+                    </svg>
+                </button>
+                <button class="btn btn-control" id="autoPlayBtn" onclick="toggleAutoPlay()" title="Auto-play on boot">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18.36 6.64A9 9 0 1 1 5.64 6.64" />
+                        <line x1="12" y1="2" x2="12" y2="12" />
                     </svg>
                 </button>
             </div>
             <!-- Volume -->
             <div class="volume-container">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
-                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" />
                 </svg>
                 <input type="range" id="volumeBar" class="volume-bar" min="0" max="150" value="80"
-                       oninput="setVolume(this.value)">
+                    oninput="setVolume(this.value)">
                 <span id="volumeValue" class="volume-value">80%</span>
             </div>
         </section>
@@ -106,10 +154,11 @@
                     <h2>Upload Video</h2>
                 </div>
                 <div class="upload-zone" id="uploadZone">
-                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                        <polyline points="17 8 12 3 7 8"/>
-                        <line x1="12" y1="3" x2="12" y2="15"/>
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="1.5">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="17 8 12 3 7 8" />
+                        <line x1="12" y1="3" x2="12" y2="15" />
                     </svg>
                     <p>Drag & drop video files here</p>
                     <p class="upload-hint">or click to browse</p>
@@ -138,6 +187,55 @@
         <p>Raspberry Pi Video Signage Player</p>
     </footer>
 
+    <!-- Schedule Modal -->
+    <div class="modal-overlay" id="scheduleModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="modalTitle">Schedule Settings</h3>
+                <button class="modal-close" onclick="closeScheduleModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="schedFilename">
+
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+                    <label style="margin: 0; font-size: 1rem; color: var(--text);">Active for Playback</label>
+                    <label class="switch">
+                        <input type="checkbox" id="schedActive">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <p style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 1rem;">
+                    Leave fields blank if you don't want to restrict by date or time.
+                </p>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label>Start Date</label>
+                        <input type="date" id="schedStartDate">
+                    </div>
+                    <div class="form-group">
+                        <label>End Date</label>
+                        <input type="date" id="schedEndDate">
+                    </div>
+                    <div class="form-group">
+                        <label>Start Time</label>
+                        <input type="time" id="schedStartTime">
+                    </div>
+                    <div class="form-group">
+                        <label>End Time</label>
+                        <input type="time" id="schedEndTime">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="closeScheduleModal()">Cancel</button>
+                <button class="btn-submit" onclick="saveSchedule()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </body>
+
 </html>
