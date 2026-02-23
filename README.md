@@ -32,27 +32,41 @@ scp -r raspi-pyvlc-player/ pi@<IP_RASPBERRY_PI>:~/
 # Login ke Raspberry Pi
 ssh pi@<IP_RASPBERRY_PI>
 
-# Jalankan installer
+# Masuk ke direktori
 cd ~/raspi-pyvlc-player
+
+# Beri akses eksekusi dan jalankan installer
 chmod +x install.sh
 ./install.sh
 ```
 
+> **Catatan:** Selama instalasi berjalan, Anda akan diminta untuk memilih mode *Deployment*:
+> 1. **Development**: Menggunakan `Flask built-in server` (Port 5000).
+> 2. **Production**: Menggunakan `Gunicorn` + `Nginx` reverse proxy (Port 80) – Rekomendasi untuk pemakaian aslinya.
+> 
+> Anda juga akan diminta untuk mengatur **Username** dan **Password** yang aman untuk Dashboard.
+
 ### Manual
 
 ```bash
-# Install dependencies
+# 1. Install dependencies sistem
 sudo apt-get update
-sudo apt-get install -y vlc python3 python3-venv python3-pip
+sudo apt-get install -y vlc nginx python3 python3-venv python3-pip openssl
 
-# Buat virtualenv
+# 2. Buat Python virtual environment
 python3 -m venv venv
 source venv/bin/activate
 
-# Install Python packages
-pip install flask python-vlc
+# 3. Install Python packages
+pip install --upgrade pip
+pip install -r requirements.txt gunicorn
 
-# Jalankan
+# 4. Buat file environtment (.env)
+echo "DASHBOARD_USER=admin" > .env
+echo "DASHBOARD_PASSWORD=password_rahasia_anda" >> .env
+echo "SECRET_KEY=$(openssl rand -hex 32)" >> .env
+
+# 5. Jalankan
 python app.py
 ```
 
@@ -60,9 +74,12 @@ python app.py
 
 ### Buka Web Control Panel
 
-```
-http://<IP_RASPBERRY_PI>:80
-```
+Tergantung pada spesifikasi mode instalasi yang dipilih:
+
+- **Mode Production:** `http://<IP_RASPBERRY_PI>` (Port default 80)
+- **Mode Development:** `http://<IP_RASPBERRY_PI>:5000`
+
+Login menggunakan kredensial yang telah dibuat saat instalasi.
 
 ### Upload Video
 
@@ -99,66 +116,61 @@ sudo systemctl restart signage-player
 # Stop
 sudo systemctl stop signage-player
 
-# Lihat log
+# Lihat log background (Troubleshooting)
 journalctl -u signage-player -f
 ```
+
+*(Jika menggunakan mode Production, Nginx command: `sudo systemctl status nginx`)*
 
 ## Lokasi File
 
 | Lokasi | Keterangan |
 |--------|------------|
-| `/home/pi/raspi-pyvlc-player/videos/` | Folder video |
-| `/home/pi/raspi-pyvlc-player/playlist.json` | Playlist tersimpan |
-| `/etc/systemd/system/signage-player.service` | Systemd service |
+| `.../raspi-pyvlc-player/videos/` | Folder tempat video disimpan |
+| `.../raspi-pyvlc-player/.env` | Konfigurasi Dashboard login |
+| `/etc/systemd/system/signage-player.service` | Konfigurasi Systemd service |
+| `/etc/nginx/sites-available/signage-player` | Konfigurasi Reverse proxy (*Production mode*) |
 
 ## Format Video yang Didukung
 
-- MP4
-- AVI
-- MKV
-- MOV
-- WMV
-- FLV
-- WebM
-- TS
-- M4V
+- MP4, AVI, MKV, MOV, WMV, FLV, WebM, TS, M4V
 
 ## Troubleshooting
 
 ### Video tidak muncul
-
 ```bash
-# Cek apakah VLC terinstall
+# Cek versi VLC
 vlc --version
 
-# Cek log
+# Cek masalah player di background log
 journalctl -u signage-player -n 50
 ```
 
-### Tidak bisa akses web
-
+### Tidak bisa akses web dashboard
 ```bash
-# Cek service berjalan
+# Cek apakah service berjalan
 sudo systemctl status signage-player
 
-# Cek port 80
-sudo netstat -tlnp | grep 80
+# Cek ketersediaan Nginx (Milik production)
+sudo systemctl status nginx
 ```
 
-### Suara tidak keluar
-
-```bash
-# Cek output audio VLC
-# Edit app.py dan ubah parameter aout:
-# --aout=alsa (default)
-# atau --aout=pulse untuk PulseAudio
-```
+### Lupa Password Dashboard
+Ubah file `.env` di dalam folder project, edit bagian `DASHBOARD_PASSWORD=` lalu restart service dengan `sudo systemctl restart signage-player`.
 
 ## Uninstall
 
 ```bash
+# Hentikan dan hapus service
 sudo systemctl stop signage-player
 sudo systemctl disable signage-player
 sudo rm /etc/systemd/system/signage-player.service
+
+# (Opsional) Hapus konfigurasi Nginx jika digunakan
+sudo rm -f /etc/nginx/sites-available/signage-player
+sudo rm -f /etc/nginx/sites-enabled/signage-player
+sudo systemctl restart nginx
+
+# Reload ulang systemd daemon
 sudo systemctl daemon-reload
 ```
