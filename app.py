@@ -251,8 +251,14 @@ class SignagePlayer:
                 
                 # Advance to next valid video
                 found = False
+                old_index = self.current_index
                 for _ in range(len(self.playlist)):
-                    self.current_index = (self.current_index + 1) % len(self.playlist)
+                    next_index = (self.current_index + 1) % len(self.playlist)
+                    
+                    if not self.is_looping and next_index <= old_index:
+                        break
+                        
+                    self.current_index = next_index
                     if self._is_valid(self.playlist[self.current_index]):
                         found = True
                         break
@@ -429,14 +435,28 @@ class SignagePlayer:
 
     def remove_video(self, filename: str):
         with self._lock:
+            current_file = None
+            if self.playlist and 0 <= self.current_index < len(self.playlist):
+                current_file = self.playlist[self.current_index].get("filename")
+
             self.playlist = [p for p in self.playlist if p["filename"] != filename]
-            if self.current_index >= len(self.playlist) and self.playlist:
-                self.current_index = 0
+            
+            self.current_index = 0
+            if current_file and current_file != filename:
+                for i, p in enumerate(self.playlist):
+                    if p.get("filename") == current_file:
+                        self.current_index = i
+                        break
+                        
             self._save_playlist()
         return {"playlist": self.playlist}
 
     def reorder_playlist(self, new_order: list):
         with self._lock:
+            current_file = None
+            if self.playlist and 0 <= self.current_index < len(self.playlist):
+                current_file = self.playlist[self.current_index].get("filename")
+
             valid = []
             for item in new_order:
                 if isinstance(item, str) and (self.video_dir / item).is_file():
@@ -444,7 +464,14 @@ class SignagePlayer:
                 elif isinstance(item, dict) and "filename" in item and (self.video_dir / item["filename"]).is_file():
                     valid.append(item)
             self.playlist = valid
+            
             self.current_index = 0
+            if current_file:
+                for i, p in enumerate(self.playlist):
+                    if p.get("filename") == current_file:
+                        self.current_index = i
+                        break
+                        
             self._save_playlist()
         return {"playlist": self.playlist}
 
