@@ -249,25 +249,31 @@ class SignagePlayer:
                     self._is_playing_state = False
                     continue
                 
-                # Advance to next valid video
-                found = False
-                old_index = self.current_index
-                for _ in range(len(self.playlist)):
-                    next_index = (self.current_index + 1) % len(self.playlist)
-                    
-                    if not self.is_looping and next_index <= old_index:
-                        break
-                        
-                    self.current_index = next_index
-                    if self._is_valid(self.playlist[self.current_index]):
-                        found = True
-                        break
+                self._advance_to_next()
                 
-                if not found:
-                    self._is_playing_state = False
-                    self.player.stop()
-                else:
-                    self._play_current()
+    def _advance_to_next(self, user_triggered=False):
+        # Advance to next valid video
+        found = False
+        old_index = self.current_index
+        for _ in range(len(self.playlist)):
+            next_index = (self.current_index + 1) % len(self.playlist)
+            
+            # If we hit the end, and we're not looping, AND this was an automatic advance, stop.
+            # If user explicitly clicked 'Next', we still wrap around even if not looping.
+            # (Or alternative: user 'next' also respects looping rules and stops. Let's make user next wrap around).
+            if not self.is_looping and next_index <= old_index and not user_triggered:
+                break
+                
+            self.current_index = next_index
+            if self._is_valid(self.playlist[self.current_index]):
+                found = True
+                break
+        
+        if not found:
+            self._is_playing_state = False
+            self.player.stop()
+        else:
+            self._play_current()
 
     def _schedule_checker(self):
         while True:
@@ -342,13 +348,14 @@ class SignagePlayer:
                 return {"error": "Playlist is empty"}
             self._is_playing_state = True
             self.player.stop()
-            self._next_event.set()
+            self._advance_to_next(user_triggered=True)
             return {"status": "next"}
 
     def previous(self):
         with self._lock:
             if not self.playlist:
                 return {"error": "Playlist is empty"}
+            self._is_playing_state = True
             self.player.stop()
             # find previous valid
             found = False
