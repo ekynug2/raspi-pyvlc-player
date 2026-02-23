@@ -313,6 +313,7 @@ body {
     text-overflow: ellipsis;
 }
 .file-item .file-size { color: var(--text-dim); font-size: .75rem; margin-right: .5rem; }
+.file-actions { display: flex; gap: 6px; align-items: center; }
 .btn-sm {
     font-size: .75rem;
     padding: .3rem .6rem;
@@ -321,6 +322,8 @@ body {
     border-radius: 6px;
 }
 .btn-sm:hover { background: #333648; }
+.btn-primary { background: var(--accent); color: #fff; border: 1px solid var(--accent); }
+.btn-primary:hover { background: #7c6ef0 !important; color: #fff; }
 .btn-danger { color: var(--red); }
 .btn-danger:hover { background: rgba(231,76,60,.12) !important; }
 

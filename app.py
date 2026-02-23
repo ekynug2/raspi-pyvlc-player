@@ -641,6 +641,15 @@ def api_playlist_reorder():
     new_order = data.get("playlist", [])
     return jsonify(player.reorder_playlist(new_order))
 
+@app.route("/api/playlist/add", methods=["POST"])
+@login_required
+def api_playlist_add():
+    data = request.get_json(silent=True) or {}
+    filename = data.get("filename")
+    if filename:
+        return jsonify(player.add_video(filename))
+    return jsonify({"error": "No filename"}), 400
+
 @app.route("/api/playlist/update_item", methods=["POST"])
 @login_required
 def api_update_item():

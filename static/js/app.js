@@ -478,9 +478,17 @@ async function refreshFiles() {
         <div class="file-item">
             <span class="file-name">${v.name}</span>
             <span class="file-size">${v.size_mb} MB</span>
-            <button class="btn btn-sm btn-danger" onclick="deleteFile('${v.name}')">Delete</button>
+            <div class="file-actions">
+               <button class="btn btn-sm btn-primary" onclick="addToPlaylist('${v.name}')" title="Add to Playlist">+</button>
+               <button class="btn btn-sm btn-danger" onclick="deleteFile('${v.name}')">Delete</button>
+            </div>
         </div>
     `).join("");
+}
+
+async function addToPlaylist(filename) {
+    await apiCall("/api/playlist/add", "POST", { filename });
+    loadPlaylist();
 }
 
 async function deleteFile(filename) {
