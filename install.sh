@@ -164,20 +164,20 @@ print_info ".env file created securely."
 
 # 7. Install systemd service
 print_step "[5/6] Configuration systemd service..."
+chmod +x "$SCRIPT_DIR/run.sh"
 
 if [ "$PRODUCTION_MODE" = true ]; then
     # Production: Gunicorn service
     sudo tee /etc/systemd/system/${SERVICE_NAME}.service > /dev/null <<EOF
 [Unit]
 Description=Raspberry Pi Video Signage Player (Gunicorn)
-After=network.target
+After=network.target graphical.target
 
 [Service]
 Type=simple
 User=$(whoami)
 WorkingDirectory=${SCRIPT_DIR}
-Environment=DISPLAY=:0
-ExecStart=${SCRIPT_DIR}/venv/bin/gunicorn --workers 1 --bind 127.0.0.1:5000 app:app
+ExecStart=/bin/bash ${SCRIPT_DIR}/run.sh ${SCRIPT_DIR}/venv/bin/gunicorn --workers 1 --bind 127.0.0.1:5000 app:app
 Restart=always
 RestartSec=5
 TimeoutStopSec=5
@@ -190,14 +190,13 @@ else
     sudo tee /etc/systemd/system/${SERVICE_NAME}.service > /dev/null <<EOF
 [Unit]
 Description=Raspberry Pi Video Signage Player
-After=network.target
+After=network.target graphical.target
 
 [Service]
 Type=simple
 User=$(whoami)
 WorkingDirectory=${SCRIPT_DIR}
-Environment=DISPLAY=:0
-ExecStart=${SCRIPT_DIR}/venv/bin/python app.py
+ExecStart=/bin/bash ${SCRIPT_DIR}/run.sh ${SCRIPT_DIR}/venv/bin/python app.py
 Restart=always
 RestartSec=5
 
